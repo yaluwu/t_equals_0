@@ -12,13 +12,14 @@ exports.config =
   files:
     javascripts:
       joinTo:
-        'grandmabook.js': /^app/
+        'grandmabook.js': /^(?:app|vendor)/
       order:
         before: [
-          'vendor/scripts/console-helper.js',
-          'vendor/scripts/jquery-1.8.3.js',
-          'vendor/scripts/underscore-1.4.3.js',
-          'vendor/scripts/backbone-0.9.10.js'
+          'vendor/console-helper.js',
+          'vendor/jquery-1.8.3.js',
+          'vendor/underscore-1.4.3.js',
+          'vendor/backbone-0.9.10.js',
+          'vendor/socket.io.js'
         ]
 
   paths:

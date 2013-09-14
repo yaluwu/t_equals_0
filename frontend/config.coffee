@@ -17,9 +17,6 @@ exports.config =
           'vendor/scripts/backbone-0.9.10.js',
           'vendor/scripts/bootstrap-3.0.0.js'
         ]
-        after: [
-          'test/vendor/scripts/test-helper.js'
-        ]
 
     stylesheets:
       joinTo:
