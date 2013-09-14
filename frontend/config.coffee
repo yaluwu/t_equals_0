@@ -16,9 +16,6 @@ exports.config =
           'vendor/scripts/underscore-1.4.3.js',
           'vendor/scripts/backbone-0.9.10.js'
         ]
-        after: [
-          'test/vendor/scripts/test-helper.js'
-        ]
 
     stylesheets:
       joinTo:

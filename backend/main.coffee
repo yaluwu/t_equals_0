@@ -2,11 +2,13 @@
 app = require('express')()
 http = require 'http'
 server = http.createServer(app)
-io = require("socket.io").listen(server)
-crypto = require 'crypto'
+io = require("socket.io").listen(server,
+  'flash policy port': -1
+)
 
-io.sockets.on "connection", (socket) ->
-  console.log "A socket connected!"
+io.set 'transports', ['htmlfile', 'xhr-polling', 'jsonp-polling']
+
+crypto = require 'crypto'
 
 PORT = process.env.PORT ? 3000
 
@@ -19,3 +21,4 @@ config =
 console.log "Listening on #{PORT} with app root #{config.ROOT}"
 
 require('./lib/ids')(config, app, io)
+require('./lib/socket')(config, app, io)
