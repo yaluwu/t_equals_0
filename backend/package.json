@@ -21,6 +21,7 @@
     "socket.io": "~0.9.16",
     "express": "~3.4.0",
     "coffee-script": "~1.6.3",
-    "supervisor": "~0.5.5"
+    "supervisor": "~0.5.5",
+    "underscore": "~1.5.2"
   }
 }
