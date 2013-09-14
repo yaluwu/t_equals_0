@@ -14,7 +14,8 @@ exports.config =
           'vendor/scripts/console-helper.js',
           'vendor/scripts/jquery-1.8.3.js',
           'vendor/scripts/underscore-1.4.3.js',
-          'vendor/scripts/backbone-0.9.10.js'
+          'vendor/scripts/backbone-0.9.10.js',
+          'vendor/scripts/bootstrap-3.0.0.js'
         ]
         after: [
           'test/vendor/scripts/test-helper.js'
@@ -25,7 +26,11 @@ exports.config =
         'stylesheets/app.css': /^(app|vendor)/
         'test/stylesheets/test.css': /^test/
       order:
-        before: ['vendor/styles/normalize-2.0.1.css']
+        before: [
+          'vendor/styles/normalize-2.0.1.css',
+          'vendor/styles/bootstrap.css'
+          'vendor/styles/bootstrap-theme.css'
+        ]
         after: ['vendor/styles/helpers.css']
 
     templates:
