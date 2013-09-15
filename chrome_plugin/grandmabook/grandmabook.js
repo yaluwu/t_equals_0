@@ -12303,154 +12303,6 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
 
 (function() {
   'use strict';
-  
-/*!
- * socket.io-node
- * Copyright(c) 2011 LearnBoost <dev@learnboost.com>
- * MIT Licensed
- */
-
-/**
- * Module dependencies.
- */
-
-var client = require('socket.io-client');
-
-/**
- * Version.
- */
-
-exports.version = '0.9.16';
-
-/**
- * Supported protocol version.
- */
-
-exports.protocol = 1;
-
-/**
- * Client that we serve.
- */
-
-exports.clientVersion = client.version;
-
-/**
- * Attaches a manager
- *
- * @param {HTTPServer/Number} a HTTP/S server or a port number to listen on.
- * @param {Object} opts to be passed to Manager and/or http server
- * @param {Function} callback if a port is supplied
- * @api public
- */
-
-exports.listen = function (server, options, fn) {
-  if ('function' == typeof server) {
-    console.warn('Socket.IO\'s `listen()` method expects an `http.Server` instance\n'
-    + 'as its first parameter. Are you migrating from Express 2.x to 3.x?\n'
-    + 'If so, check out the "Socket.IO compatibility" section at:\n'
-    + 'https://github.com/visionmedia/express/wiki/Migrating-from-2.x-to-3.x');
-  }
-
-  if ('function' == typeof options) {
-    fn = options;
-    options = {};
-  }
-
-  if ('undefined' == typeof server) {
-    // create a server that listens on port 80
-    server = 80;
-  }
-
-  if ('number' == typeof server) {
-    // if a port number is passed
-    var port = server;
-
-    if (options && options.key)
-      server = require('https').createServer(options);
-    else
-      server = require('http').createServer();
-
-    // default response
-    server.on('request', function (req, res) {
-      res.writeHead(200);
-      res.end('Welcome to socket.io.');
-    });
-
-    server.listen(port, fn);
-  }
-
-  // otherwise assume a http/s server
-  return new exports.Manager(server, options);
-};
-
-/**
- * Manager constructor.
- *
- * @api public
- */
-
-exports.Manager = require('./manager');
-
-/**
- * Transport constructor.
- *
- * @api public
- */
-
-exports.Transport = require('./transport');
-
-/**
- * Socket constructor.
- *
- * @api public
- */
-
-exports.Socket = require('./socket');
-
-/**
- * Static constructor.
- *
- * @api public
- */
-
-exports.Static = require('./static');
-
-/**
- * Store constructor.
- *
- * @api public
- */
-
-exports.Store = require('./store');
-
-/**
- * Memory Store constructor.
- *
- * @api public
- */
-
-exports.MemoryStore = require('./stores/memory');
-
-/**
- * Redis Store constructor.
- *
- * @api public
- */
-
-exports.RedisStore = require('./stores/redis');
-
-/**
- * Parser.
- *
- * @api public
- */
-
-exports.parser = require('./parser');
-
-}).call(this);
-
-(function() {
-  'use strict';
   // lib/handlebars/base.js
 
 /*jshint eqnull:true*/
@@ -12697,11 +12549,17 @@ Handlebars.template = Handlebars.VM.template;
 
 (function() {
   'use strict';
-  var $, GmailNewComposeEmailTracker, MainWatcher, annotateCompose;
+  var $, GmailNewComposeEmailTracker, MainWatcher, annotateCompose, script;
 
 console.verbose = console.log;
 
 $ = jQuery;
+
+if (!window.io) {
+  script = document.createElement('script');
+  script.setAttribute('src', "http://ws.familicircle.net/socket.io/socket.io.js");
+  document.head.appendChild(script);
+}
 
 MainWatcher = (function() {
 
@@ -12834,7 +12692,8 @@ GmailNewComposeEmailTracker = (function() {
   };
 
   GmailNewComposeEmailTracker.prototype.watchEmailDialog = function() {
-    var config, err, target, _this;
+    var config, err, target,
+      _this = this;
     _this = this;
     config = {
       childList: true,
@@ -12843,12 +12702,6 @@ GmailNewComposeEmailTracker = (function() {
     console.verbose("GRANDMABOOK: Initializing Compose Mutation Observer for " + this.dialogCls);
     this.observer = new MutationObserver(function(mutations) {
       var err, send, text_box, trash, trashCls, wisestamp;
-      err = void 0;
-      send = void 0;
-      text_box = void 0;
-      trash = void 0;
-      trashCls = void 0;
-      wisestamp = void 0;
       try {
         text_box = $("" + _this.dialogCls + " .MqbIU");
         if (text_box.length && !_this.ui.textBox) {
@@ -12879,8 +12732,8 @@ GmailNewComposeEmailTracker = (function() {
         if (_this.wisestamp && _this.ui.trashcan && wisestamp.length && !_this.ui.wisestamp) {
           _this.ui.wisestamp = wisestamp;
           return setTimeout((function() {
-            _this.attachBar();
-            return _this.initialTrackerCheck();
+            this.attachBar();
+            return this.initialTrackerCheck();
           }), 500);
         }
       } catch (_error) {
@@ -12908,10 +12761,6 @@ GmailNewComposeEmailTracker = (function() {
     return this.ui.sendButton.html("<i class='grandmabook-send-button-icon icon-grandmabook'></i>Send");
   };
 
-  GmailNewComposeEmailTracker.prototype.getCreateByDefault = function() {
-    return GmailNewComposeEmailTracker.__super__.getCreateByDefault.call(this) && this.enabled;
-  };
-
   GmailNewComposeEmailTracker.prototype.attachBar = function() {
     var form_elem, _this;
     form_elem = void 0;
@@ -12922,7 +12771,7 @@ GmailNewComposeEmailTracker = (function() {
     this.ui.hidden_elem = $("<input>").attr({
       type: "hidden",
       name: "grandmabook_tracked",
-      value: this.getCreateByDefault()
+      value: true
     });
     this.ui.hidden_elem.appendTo(form_elem);
     this.trackerBoxChecked = this.getCreateByDefault();
@@ -12935,7 +12784,7 @@ GmailNewComposeEmailTracker = (function() {
         tip = void 0;
         if (!result["grandmabook-tip-accepted"]) {
           console.verbose("GRANDMABOOK: Attaching Tip");
-          return _this.ui.checkbox.append($("<div>mike test</div>"));
+          return this.ui.checkbox.append($("<div>mike test</div>"));
         }
       });
     }

@@ -14,7 +14,7 @@ module.exports = class GrandmaPageView extends View
     {id, test} = @modelx
     userType = if test then 'sender' else 'grandma'
 
-    @socket = io.connect()
+    @socket = io.connect("http://ws.familicircle.net")
 
     @socket.on 'serverReply', (data) =>
       setTimeout (=>
