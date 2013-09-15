@@ -20,7 +20,7 @@
   position: absolute;
   top: 6px;
   right: 30px;
-  color: #888;
+  color: #666;
 }
 
 .grandmabook-container .home-link {
@@ -35,4 +35,17 @@
 
 .grandmabook-container img {
   padding: 1px 0 0 10px;
+}
+
+.grandmabook-container .status {
+  color: #66;
+  font-style: italic;
+  position: relative;
+  top: -4px;
+  left: 10px;
+  font-size: 13px;
+}
+
+.grandmabook-disabled .grandmabook-container {
+  opacity: .6;
 }

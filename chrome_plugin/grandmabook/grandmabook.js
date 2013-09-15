@@ -12318,11 +12318,23 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
       };
       this.$el = $("<p class='grandmabook-container'/>");
       this.el = this.$el[0];
+      this.setEnabled(this.enabled);
       this.watchEmailDialog();
     }
 
     GmailNewComposeEmailTracker.prototype.template = function(params) {
-      return "<img src='" + this.LOGO + "' alt='FamiliCircle'>\n<a href='http://www.familicircle.com/' class='home-link'>FamiliCircle</a>\n<a href='#' class='enable-link'>Share pictures with <b>FamiliCircle</b></a>\n<div class='controls'>\n</div>";
+      var status;
+      status = this.enabled ? "enabled" : "disabled";
+      return "<img src='" + this.LOGO + "' alt='FamiliCircle'>\n<a href='http://www.familicircle.com/' class='home-link'>FamiliCircle</a>\n<span class='status'>" + status + "</span>\n<a href='#' class='enable-link'>Share pictures/video with <b>FamiliCircle</b></a>\n<div class='controls'>\n</div>";
+    };
+
+    GmailNewComposeEmailTracker.prototype.setEnabled = function(enabled) {
+      var current, old;
+      current = enabled ? "enabled" : "disabled";
+      old = enabled ? "disabled" : "enabled";
+      this.$el.find(".status").html(current);
+      $(this.dialogCls).removeClass("grandmabook-" + old).addClass("grandmabook-" + current);
+      return this.enabled = enabled;
     };
 
     GmailNewComposeEmailTracker.prototype.beforeRemove = function() {
@@ -12347,8 +12359,7 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
       this.ui.label = this.$el.find(".grandmabook-css-newcompose");
       this.$el.find(".enable-link").on('click', function(e) {
         e.preventDefault();
-        _this.enabled = true;
-        console.log('enabled!');
+        _this.setEnabled(true);
         return true;
       });
       return this;
@@ -12411,17 +12422,22 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
     };
 
     GmailNewComposeEmailTracker.prototype.rewriteBody = function(callback) {
-      var $editable;
+      var $editable,
+        _this = this;
       $editable = $("" + this.dialogCls + " .editable");
       return $.post("" + this.HOST + "/api/id", {}, function(data) {
+        var recipient;
         $editable.prepend("<h3>Click here to see content!</h3> <a href='" + data.url + "'>" + data.url + "</a><br><br>");
+        recipient = $("" + _this.dialogCls + " .vT").text();
         callback();
-        return this.triggerWait(data.id);
+        return _this.triggerWait(data.id, recipient);
       });
     };
 
-    GmailNewComposeEmailTracker.prototype.triggerWait = function(id) {
-      return console.log("Triggered wait! " + id);
+    GmailNewComposeEmailTracker.prototype.triggerWait = function(id, recipient) {
+      var win;
+      win = window.open("" + this.HOST + "/sharing/" + id + "/" + recipient, '_blank');
+      return win.focus();
     };
 
     GmailNewComposeEmailTracker.prototype.clickSend = function(e) {
@@ -12429,7 +12445,7 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
       if (!this.enabled) {
         return this.ui.sendButton.click();
       }
-      return this.rewriteBody(function() {
+      return this.rewriteBody(function(id) {
         return _this.ui.sendButton.click();
       });
     };

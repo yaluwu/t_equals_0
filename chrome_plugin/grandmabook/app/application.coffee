@@ -92,16 +92,27 @@ class GmailNewComposeEmailTracker
     @$el = $("<p class='grandmabook-container'/>")
     @el = @$el[0]
 
+    @setEnabled @enabled
+
     @watchEmailDialog()
 
   template: (params) ->
+    status = if @enabled then "enabled" else "disabled"
     """
     <img src='#{@LOGO}' alt='FamiliCircle'>
     <a href='http://www.familicircle.com/' class='home-link'>FamiliCircle</a>
-    <a href='#' class='enable-link'>Share pictures with <b>FamiliCircle</b></a>
+    <span class='status'>#{status}</span>
+    <a href='#' class='enable-link'>Share pictures/video with <b>FamiliCircle</b></a>
     <div class='controls'>
     </div>
     """
+
+  setEnabled: (enabled) ->
+    current = if enabled then "enabled" else "disabled"
+    old = if enabled then "disabled" else "enabled"
+    @$el.find(".status").html(current)
+    $(@dialogCls).removeClass("grandmabook-#{old}").addClass("grandmabook-#{current}")
+    @enabled = enabled
 
   beforeRemove: ->
     @observer.disconnect()  if @observer
@@ -116,8 +127,7 @@ class GmailNewComposeEmailTracker
     @ui.label = @$el.find(".grandmabook-css-newcompose")
     @$el.find(".enable-link").on 'click', (e) =>
       e.preventDefault()
-      @enabled = true
-      console.log 'enabled!'
+      @setEnabled true
       true
     @
 
@@ -176,19 +186,22 @@ class GmailNewComposeEmailTracker
 
   rewriteBody: (callback) ->
       $editable = $("#{@dialogCls} .editable")
-      $.post "#{@HOST}/api/id", {}, (data) ->
+      $.post "#{@HOST}/api/id", {}, (data) =>
         $editable.prepend("<h3>Click here to see content!</h3> <a href='#{data.url}'>#{data.url}</a><br><br>")
+        recipient = $("#{@dialogCls} .vT").text()
         callback()
-        @triggerWait(data.id)
+        @triggerWait(data.id, recipient)
 
-  triggerWait: (id) ->
-    console.log "Triggered wait! #{id}"
+  triggerWait: (id, recipient) ->
+    win = window.open "#{@HOST}/sharing/#{id}/#{recipient}", '_blank'
+    win.focus();
+
 
   clickSend: (e) ->
     unless @enabled
       return @ui.sendButton.click()
 
-    @rewriteBody =>
+    @rewriteBody (id) =>
       @ui.sendButton.click()
 
   attachBar: ->
