@@ -14,7 +14,7 @@ module.exports = class GrandmaPageView extends View
     {id, test} = @modelx
     userType = if test then 'sender' else 'grandma'
 
-    @socket = io.connect("http://ws.familicircle.net")
+    @socket = io.connect()
 
     @socket.on 'serverReply', (data) =>
       setTimeout (=>
@@ -28,12 +28,13 @@ module.exports = class GrandmaPageView extends View
 
     @currentFile =
       type: ''
-      length: ''
+      length: 0
       content: ''
       sender: 
         name: ''
         email: ''
       closed: false
+      bytesSoFar: 0
       
     @chunks = []
 
@@ -52,10 +53,13 @@ module.exports = class GrandmaPageView extends View
     @currentFile.length = data.size
     @currentFile.sender = data.sender
     @currentFile.content = ''
+    @currentFile.bytesSoFar = 0
     @chunks = []
 
   fileChunk: (data) ->
     @chunks.push(data)
+    @currentFile.bytesSoFar += data.length
+    @render()
 
   fileClose: (data) ->
     console.log "file transfer finished"
@@ -63,19 +67,26 @@ module.exports = class GrandmaPageView extends View
     @currentFile.closed = true
     @render()
 
-  render: ->
-    type = if @currentFile.closed then @currentFile.type else ''
+  getType: ->
+    if @currentFile.length > 0 and not @currentFile.closed
+      return 'progress'
 
+    type = @currentFile.type
     switch 
-      when type.search(/^image/) > -1
-        content =  img: @currentFile
-      when type.search(/^plain/) > -1
-        content = text: @currentFile
-      when type.search(/youtube/) > -1
-        console.log "epic"
-        content = video: @currentFile
-      else
-        content = undefined
+      when type.search(/^image/)  > -1 then 'img'
+      when type.search(/^plain/)  > -1 then 'text'
+      when type.search(/youtube/) > -1 then 'video'
+      else undefined
+        
+  render: ->
+    type = @getType()
+
+    if type?
+      content = {}
+      content[type] = @currentFile
+      content[type].percent = Math.floor(100 * @currentFile.bytesSoFar / @currentFile.length)
+    else
+      content = undefined
 
     @$el.html(@template({content}))
 
@@ -87,6 +98,7 @@ module.exports = class GrandmaPageView extends View
     @socket.emit "fileNew", meta
 
     console.log "chunking file..."
+    
     @sendChunk chunk for chunk in data
     console.log "finishing transfer..."
     @socket.emit "fileClose"
@@ -97,7 +109,7 @@ module.exports = class GrandmaPageView extends View
 
     meta = 
       type: "video/youtube"
-      length: 0
+      size: url.length
       sender:
         name: "Yalu Wu"
         email: "yaluwu@gmail.com"
@@ -114,7 +126,7 @@ module.exports = class GrandmaPageView extends View
 
     meta = 
       type: "plain/text"
-      length: 0
+      size: data.join('').length
       sender:
         name: "Mike Axiak"
         email: "mcaxiak@gmail.com"
@@ -234,7 +246,7 @@ module.exports = class GrandmaPageView extends View
 
     meta =
       type: "image/png"
-      length: 0
+      size: 5349
       sender:
         name: "Karl Rieb"
         email: "karl.rieb@gmail.com"

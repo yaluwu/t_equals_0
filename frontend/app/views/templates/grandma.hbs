@@ -2,6 +2,23 @@
 
 {{#content}}
 
+{{#progress}}
+<div id="placeholder" class="panel panel-primary">
+  <div class="panel-heading">
+    <h3 class="panel-title">{{type}} from {{sender.name}} ({{sender.email}})</h3>
+  </div>
+  <div class="panel-body">
+    <div class="progress progress-striped active">
+      <div class="progress-bar"  role="progressbar" 
+	   aria-valuenow="45" aria-valuemin="0" aria-valuemax="100" 
+	   style="width: {{percent}}%">
+	<span class="sr-only">{{percent}}% Complete</span>
+      </div>
+    </div>
+  </div>
+</div>
+{{/progress}}
+
 {{#img}} 
 <div id="placeholder" class="panel panel-primary">
   <div class="panel-heading">
