@@ -22,7 +22,7 @@
 {{#img}}
 <div id="placeholder" class="panel panel-primary">
   <div class="panel-heading">
-    <h3 class="panel-title">Picture from {{sender.name}} ({{sender.email}})</h3>
+    <h3 class="panel-title">Picture from {{sender}}</h3>
   </div>
   <div class="panel-body">
     <img src="data:{{type}};base64,{{content}}"
@@ -36,7 +36,7 @@
 {{#text}}
 <div id="placeholder" class="panel panel-primary">
   <div class="panel-heading">
-    <h3 class="panel-title">Message from {{sender.name}} ({{sender.email}})</h3>
+    <h3 class="panel-title">Message from {{sender}}</h3>
   </div>
   <div class="panel-body">
     <h3 class="muted"><pre>{{content}}</pre></h3>
@@ -48,7 +48,7 @@
 {{#video}}
 <div id="placeholder" class="panel panel-primary">
   <div class="panel-heading">
-    <h3 class="panel-title">Video from {{sender.name}} ({{sender.email}})</h3>
+    <h3 class="panel-title">Video from {{sender}}</h3>
   </div>
   <div class="panel-body">
     <iframe id="ytplayer" type="text/html" width="640" height="390"
