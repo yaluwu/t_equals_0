@@ -1,6 +1,6 @@
 {
-    "name": "GrandmaBook",
-    "description": "Make grandma happy",
+    "name": "FamiliCircle",
+    "description": "Keeping every family connected",
     "version": "0.1",
 
     "permissions": [
@@ -13,14 +13,18 @@
     }],
 
     "icons": {
-        "48": "icon.png"
+        "16": "icon16.png",
+        "48": "icon.png",
+        "128": "icon.png"
     },
 
     "browser_action": {
-        "default_icon": "icon.png",
+        "default_icon": "icon128.png",
         "default_title": "Grandmabook!",
         "default_popup": "popup.html"
     },
 
-    "manifest_version": 2
+    "manifest_version": 2,
+
+    "homepage_url": "http://www.familicircle.com"
 }

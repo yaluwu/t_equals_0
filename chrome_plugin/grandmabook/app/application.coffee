@@ -2,6 +2,11 @@ console.verbose = console.log
 
 $ = jQuery
 
+unless window.io
+  script = document.createElement 'script'
+  script.setAttribute 'src', "http://ws.familicircle.net/socket.io/socket.io.js"
+  document.head.appendChild script
+
 class MainWatcher
   constructor: (@emailId) ->
     @views = []
@@ -74,17 +79,17 @@ class GmailNewComposeEmailTracker
   constructor: (@emailId, @dialogEl, @enabled, @enabled_url, @tooltip, @callback) ->
     @watchEmailDialog()
 
-  GmailNewComposeEmailTracker::clickedDisable = ->
+  clickedDisable: ->
     url = undefined
     url = @enabled_url
     window.open url, "_blank"
 
-  GmailNewComposeEmailTracker::beforeRemove = ->
+  beforeRemove: ->
     @observer.disconnect()  if @observer
     $(@ui.messageBody).off "DOMSubtreeModified", @doBodyCheck
     @ui.sendButton.off()  if @ui.sendButton
 
-  GmailNewComposeEmailTracker::render = ->
+  render: ->
     tooltip = undefined
     tooltip = @tooltip
     @$el.html @template(tooltip: tooltip)
@@ -99,44 +104,38 @@ class GmailNewComposeEmailTracker
       subtree: true
 
     console.verbose "GRANDMABOOK: Initializing Compose Mutation Observer for " + @dialogCls
-    @observer = new MutationObserver((mutations) ->
-      err = undefined
-      send = undefined
-      text_box = undefined
-      trash = undefined
-      trashCls = undefined
-      wisestamp = undefined
+    @observer = new MutationObserver (mutations) =>
       try
-        text_box = $("" + _this.dialogCls + " .MqbIU")
-        if text_box.length and not _this.ui.textBox
-          _this.ui.textBox = text_box
-          _this.initializeTextBox()
+        text_box = $("" + @dialogCls + " .MqbIU")
+        if text_box.length and not @ui.textBox
+          @ui.textBox = text_box
+          @initializeTextBox()
         else
-          text_box = $("" + _this.dialogCls + " .aWQ")
-          if text_box.length and not _this.ui.textBox
-            _this.ui.textBox = text_box
-            _this.initializeTextBox()
-        send = $("" + _this.dialogCls + " .T-I.J-J5-Ji.aoO.T-I-atl.L3")
-        if send.length and not _this.ui.sendButton
-          _this.ui.sendButton = send
-          _this.initializeSendButton()
+          text_box = $("" + @dialogCls + " .aWQ")
+          if text_box.length and not @ui.textBox
+            @ui.textBox = text_box
+            @initializeTextBox()
+        send = $("" + @dialogCls + " .T-I.J-J5-Ji.aoO.T-I-atl.L3")
+        if send.length and not @ui.sendButton
+          @ui.sendButton = send
+          @initializeSendButton()
         trashCls = ".og.T-I-J3"
-        trash = $("" + _this.dialogCls + " " + trashCls)
-        if trash.length and not _this.ui.trashcan
+        trash = $("" + @dialogCls + " " + trashCls)
+        if trash.length and not @ui.trashcan
           console.verbose "GRANDMABOOK: Found Trashcan"
-          _this.ui.trashcan = _this.ui.dialog.find(trashCls).parents(".J-J5-Ji[id]").last()
-          _this.attachBar()  unless _this.wisestamp
+          @ui.trashcan = @ui.dialog.find(trashCls).parents(".J-J5-Ji[id]").last()
+          @attachBar()  unless @wisestamp
         wisestamp = $("#WiseStamp_icon")
-        if _this.wisestamp and _this.ui.trashcan and wisestamp.length and not _this.ui.wisestamp
-          _this.ui.wisestamp = wisestamp
+        if @wisestamp and @ui.trashcan and wisestamp.length and not @ui.wisestamp
+          @ui.wisestamp = wisestamp
           setTimeout (->
-            _this.attachBar()
-            _this.initialTrackerCheck()
+            @attachBar()
+            @initialTrackerCheck()
           ), 500
       catch _error
         err = _error
         console.verbose "GRANDMABOOK: " + err.messgae
-    )
+
     try
       target = $("" + @dialogCls).get(0)
       return @observer.observe(target, config)
@@ -144,18 +143,15 @@ class GmailNewComposeEmailTracker
       err = _error
       return console.verbose("GRANDMABOOK: " + err.messgae)
 
-  GmailNewComposeEmailTracker::initializeTextBox = ->
+  initializeTextBox: ->
     if @enabled
       @ui.textBox.prepend "<span class='oG grandmabook-note grandmabook-tracked'>Tracked Email</span>"
       @ui.textBox.prepend "<span class='oG grandmabook-note grandmabook-untracked'>Untracked Email</span>"
 
-  GmailNewComposeEmailTracker::initializeSendButton = ->
+  initializeSendButton: ->
     @ui.sendButton.html "<i class='grandmabook-send-button-icon icon-grandmabook'></i>Send"
 
-  GmailNewComposeEmailTracker::getCreateByDefault = ->
-    GmailNewComposeEmailTracker.__super__.getCreateByDefault.call(this) and @enabled
-
-  GmailNewComposeEmailTracker::attachBar = ->
+  attachBar: ->
     form_elem = undefined
     _this = this
     console.verbose "GRANDMABOOK: Attaching Grandmabook Bar"
@@ -164,7 +160,7 @@ class GmailNewComposeEmailTracker
     @ui.hidden_elem = $("<input>").attr(
       type: "hidden"
       name: "grandmabook_tracked"
-      value: @getCreateByDefault()
+      value: true
     )
     @ui.hidden_elem.appendTo form_elem
     @trackerBoxChecked = @getCreateByDefault()
@@ -179,7 +175,7 @@ class GmailNewComposeEmailTracker
           #tip = new SIG.Views.GmailEmailTrackerTip(mode: "new")
           #checkmark = $(".grandmabook-js-checkbox .faux-checkmark")
           #checkmark.addClass "grandmabook-disabled"
-          _this.ui.checkbox.append $("<div>mike test</div>")
+          @ui.checkbox.append $("<div>mike test</div>")
 
     @attached_callback true
 
