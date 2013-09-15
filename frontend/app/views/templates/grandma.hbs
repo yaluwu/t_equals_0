@@ -1,5 +1,7 @@
 <div class="file-container"></div>
 
+{{#content}}
+
 {{#img}} 
 <div id="placeholder" class="panel panel-primary">
   <div class="panel-heading">
@@ -10,12 +12,44 @@
 	 alt="image sent from {{sender.name}}">
   </div>
 </div>
+{{/img}}
+
+
+
+{{#text}}
+<div id="placeholder" class="panel panel-primary">
+  <div class="panel-heading">
+    <h3 class="panel-title">Message from {{sender.name}} ({{sender.email}})</h3>
+  </div>
+  <div class="panel-body">
+    <h3 class="muted"><pre>{{content}}</pre></h3>
+  </div>
 </div>
+{{/text}}
+
+
+{{#video}}
+<div id="placeholder" class="panel panel-primary">
+  <div class="panel-heading">
+    <h3 class="panel-title">Video from {{sender.name}} ({{sender.email}})</h3>
+  </div>
+  <div class="panel-body">
+    <iframe id="ytplayer" type="text/html" width="640" height="390"
+	    src="http://www.youtube.com/embed/{{content}}?autoplay=1"
+	    frameborder="0"/>
+  </div>
+</div>
+{{/video}}
+
+
+
 {{else}}
+
 <div class="jumbotron">
   <div class="container">
     <h1>Welcome!</h1>
     <p>Nobody is currently sending you any files.</p>
   </div>
 </div>
-{{/img}}
+
+{{/content}}

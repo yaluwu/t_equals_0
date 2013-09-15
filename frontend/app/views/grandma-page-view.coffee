@@ -55,7 +55,6 @@ module.exports = class GrandmaPageView extends View
     @chunks = []
 
   fileChunk: (data) ->
-    console.log data
     @chunks.push(data)
 
   fileClose: (data) ->
@@ -65,11 +64,62 @@ module.exports = class GrandmaPageView extends View
     @render()
 
   render: ->
-    img = if @currentFile.closed then @currentFile else undefined
-    @$el.html(@template({img}))
+    type = if @currentFile.closed then @currentFile.type else ''
+
+    switch 
+      when type.search(/^image/) > -1
+        content =  img: @currentFile
+      when type.search(/^plain/) > -1
+        content = text: @currentFile
+      when type.search(/youtube/) > -1
+        console.log "epic"
+        content = video: @currentFile
+      else
+        content = undefined
+
+    @$el.html(@template({content}))
 
   sendChunk: (chunk) ->
     @socket.emit "fileChunk", chunk
+
+  sendDataz: (meta, data) ->
+    console.log "beginning file transfer..."
+    @socket.emit "fileNew", meta
+
+    console.log "chunking file..."
+    @sendChunk chunk for chunk in data
+    console.log "finishing transfer..."
+    @socket.emit "fileClose"
+    console.log "done"
+
+  sendVideo: (url = 'g85wBkhFhjo') ->
+    data = [url]
+
+    meta = 
+      type: "video/youtube"
+      length: 0
+      sender:
+        name: "Yalu Wu"
+        email: "yaluwu@gmail.com"
+        
+    @sendDataz meta, data
+    
+  sendText: () ->
+    data = [
+      'Hey grandma! How are you doing?  I hope you are enjoying this '
+      'wonderful weather we\'ve been having.  I miss you tons and wish '
+      'you could be here.  Maybe we can go visit in November?\n\n'
+      'Love,\nMike'
+    ]
+
+    meta = 
+      type: "plain/text"
+      length: 0
+      sender:
+        name: "Mike Axiak"
+        email: "mcaxiak@gmail.com"
+        
+    @sendDataz meta, data
 
   sendImage: () ->
     data = [
@@ -182,16 +232,14 @@ module.exports = class GrandmaPageView extends View
       'IOpAJFcEAUAA\nEPWi/gXINMF3jnwvqgAAAABJRU5ErkJggg=='
     ]
 
-    @socket.emit "fileNew",
+    meta =
       type: "image/png"
       length: 0
       sender:
         name: "Karl Rieb"
         email: "karl.rieb@gmail.com"
         
-    @sendChunk chunk for chunk in data
-    @socket.emit "fileClose" 
+    @sendDataz meta, data
     
-
   emitEvent: (event, data) ->
     @socket.emit event, data
