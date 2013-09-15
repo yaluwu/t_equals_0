@@ -4,16 +4,29 @@
 <div class="jumbotron">
   <div class="container">
     <h1>Welcome</h1>
+    {{#grandmaConnected}}
     <p>Hi {{sender}}, '{{recipient}}' is now waiting for your files!</p>
     <p>Go ahead and drag or select some files below.</p>
+    {{else}}
+    <p>Hi {{sender}}, we're still waiting for {{recipient}} to open the link...</p>
+    {{/grandmaConnected}}
   </div>
 </div>
+
+{{#grandmaConnected}}
 <div class="container">
   <div id="drop-zone">
     <h3>Drop files here</h3>
-
     <input type="file" id="files" name="files" multiple />
   </div>
 
+  <div id="youtube">
+    <form class="youtube-form" action=".">
+      <label for="youtube-url">Youtube url:</label>
+      <input type="text" id="youtube-url" name="youtube-url">
+      <input type="submit" value="Send video">
+    </form>
+  </div>
 </div>
+{{/grandmaConnected}}
 
