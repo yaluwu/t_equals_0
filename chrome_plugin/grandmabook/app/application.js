@@ -27,7 +27,7 @@
         emailId = this.emailId;
         this.emailId += 1;
         $el.addClass("grandmabook grandmabook-nc-email grandmabook-nc-email-" + emailId);
-        _enabled = true;
+        _enabled = false;
         _enabled_url = "";
         _tooltip = "Track Email with Grandmabook";
         callback = function(success) {
@@ -104,7 +104,9 @@
   })();
 
   GmailNewComposeEmailTracker = (function() {
-    GmailNewComposeEmailTracker.prototype.LOGO = 'http://www.familicircle.com/images/logo_40_trans.png';
+    GmailNewComposeEmailTracker.prototype.LOGO = 'http://www.familicircle.com/images/logo_24_trans.png';
+
+    GmailNewComposeEmailTracker.prototype.HOST = 'http://www.familicircle.com';
 
     function GmailNewComposeEmailTracker(params) {
       this.emailId = params.emailId, this.dialogEl = params.dialogEl, this.enabled = params.enabled, this.enabled_url = params.enabled_url, this.tooltip = params.tooltip, this.callback = params.callback;
@@ -118,14 +120,7 @@
     }
 
     GmailNewComposeEmailTracker.prototype.template = function(params) {
-      return "<div class='" + params.dialogCls + "'>\n<img src='" + this.LOGO + "' alt='FamiliCircle'>\nYo, what up\n</div>";
-    };
-
-    GmailNewComposeEmailTracker.prototype.clickedDisable = function() {
-      var url;
-      url = void 0;
-      url = this.enabled_url;
-      return window.open(url, "_blank");
+      return "<img src='" + this.LOGO + "' alt='FamiliCircle'>\n<a href='http://www.familicircle.com/' class='home-link'>FamiliCircle</a>\n<a href='#' class='enable-link'>Share pictures with <b>FamiliCircle</b></a>\n<div class='controls'>\n</div>";
     };
 
     GmailNewComposeEmailTracker.prototype.beforeRemove = function() {
@@ -139,7 +134,8 @@
     };
 
     GmailNewComposeEmailTracker.prototype.render = function() {
-      var tooltip;
+      var tooltip,
+        _this = this;
       tooltip = void 0;
       tooltip = this.tooltip;
       this.$el.html(this.template({
@@ -147,6 +143,12 @@
       }));
       this.ui.checkbox = this.$el.find(".grandmabook-js-checkbox");
       this.ui.label = this.$el.find(".grandmabook-css-newcompose");
+      this.$el.find(".enable-link").on('click', function(e) {
+        e.preventDefault();
+        _this.enabled = true;
+        console.log('enabled!');
+        return true;
+      });
       return this;
     };
 
@@ -159,19 +161,8 @@
       };
       console.verbose("GRANDMABOOK: Initializing Compose Mutation Observer for " + this.dialogCls);
       this.observer = new MutationObserver(function(mutations) {
-        var err, send, text_box, trash, trashCls, wisestamp, _error;
+        var err, send, trash, trashCls, _error;
         try {
-          text_box = $("" + _this.dialogCls + " .MqbIU");
-          if (text_box.length && !_this.ui.textBox) {
-            _this.ui.textBox = text_box;
-            _this.initializeTextBox();
-          } else {
-            text_box = $("" + _this.dialogCls + " .aWQ");
-            if (text_box.length && !_this.ui.textBox) {
-              _this.ui.textBox = text_box;
-              _this.initializeTextBox();
-            }
-          }
           send = $("" + _this.dialogCls + " .T-I.J-J5-Ji.aoO.T-I-atl.L3");
           if (send.length && !_this.ui.sendButton) {
             _this.ui.sendButton = send;
@@ -183,16 +174,8 @@
             console.verbose("GRANDMABOOK: Found Trashcan");
             _this.ui.trashcan = _this.ui.dialog.find(trashCls).parents(".J-J5-Ji[id]").last();
             if (!_this.wisestamp) {
-              _this.attachBar();
+              return _this.attachBar();
             }
-          }
-          wisestamp = $("#WiseStamp_icon");
-          if (_this.wisestamp && _this.ui.trashcan && wisestamp.length && !_this.ui.wisestamp) {
-            _this.ui.wisestamp = wisestamp;
-            return setTimeout((function() {
-              this.attachBar();
-              return this.initialTrackerCheck();
-            }), 500);
           }
         } catch (_error) {
           _error = _error;
@@ -218,24 +201,40 @@
     };
 
     GmailNewComposeEmailTracker.prototype.initializeSendButton = function() {
-      return this.ui.sendButton.html("<i class='grandmabook-send-button-icon icon-grandmabook'></i>Send");
+      var $btn;
+      $btn = this.ui.sendButton.clone();
+      this.ui.sendButton.before($btn);
+      this.ui.sendButton.css('display', 'none');
+      return $btn.on('click', _.bind(this.clickSend, this));
+    };
+
+    GmailNewComposeEmailTracker.prototype.rewriteBody = function(callback) {
+      var $editable;
+      $editable = $("" + this.dialogCls + " .editable");
+      return $.post("" + this.HOST + "/api/id", {}, function(data) {
+        $editable.prepend("<h3>Click here to see content!</h3> <a href='" + data.url + "'>" + data.url + "</a><br><br>");
+        callback();
+        return this.triggerWait(data.id);
+      });
+    };
+
+    GmailNewComposeEmailTracker.prototype.triggerWait = function(id) {
+      return console.log("Triggered wait! " + id);
+    };
+
+    GmailNewComposeEmailTracker.prototype.clickSend = function(e) {
+      var _this = this;
+      if (!this.enabled) {
+        return this.ui.sendButton.click();
+      }
+      return this.rewriteBody(function() {
+        return _this.ui.sendButton.click();
+      });
     };
 
     GmailNewComposeEmailTracker.prototype.attachBar = function() {
-      var form_elem;
-      form_elem = void 0;
       console.verbose("GRANDMABOOK: Attaching Grandmabook Bar");
-      this.dialogEl.find(".aDh").before(this.render().el);
-      return;
-      form_elem = this.ui.dialog.find("form");
-      this.ui.hidden_elem = $("<input>").attr({
-        type: "hidden",
-        name: "grandmabook_tracked",
-        value: true
-      });
-      this.ui.hidden_elem.appendTo(form_elem);
-      this.trackerBoxChecked = true;
-      return this.attached_callback(true);
+      return this.dialogEl.find(".aDh").before(this.render().el);
     };
 
     return GmailNewComposeEmailTracker;

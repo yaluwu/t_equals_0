@@ -20,7 +20,7 @@ class MainWatcher
       @emailId += 1
 
       $el.addClass "grandmabook grandmabook-nc-email grandmabook-nc-email-" + emailId
-      _enabled = true
+      _enabled = false
       _enabled_url = ""
       _tooltip = "Track Email with Grandmabook"
 
@@ -81,7 +81,8 @@ class MainWatcher
 
 
 class GmailNewComposeEmailTracker
-  LOGO: 'http://www.familicircle.com/images/logo_40_trans.png'
+  LOGO: 'http://www.familicircle.com/images/logo_24_trans.png'
+  HOST: 'http://www.familicircle.com'
 
   constructor: (params) ->
     {@emailId, @dialogEl, @enabled, @enabled_url, @tooltip, @callback} = params
@@ -94,16 +95,13 @@ class GmailNewComposeEmailTracker
     @watchEmailDialog()
 
   template: (params) ->
-    """<div class='#{params.dialogCls}'>
+    """
     <img src='#{@LOGO}' alt='FamiliCircle'>
-    Yo, what up
+    <a href='http://www.familicircle.com/' class='home-link'>FamiliCircle</a>
+    <a href='#' class='enable-link'>Share pictures with <b>FamiliCircle</b></a>
+    <div class='controls'>
     </div>
     """
-
-  clickedDisable: ->
-    url = undefined
-    url = @enabled_url
-    window.open url, "_blank"
 
   beforeRemove: ->
     @observer.disconnect()  if @observer
@@ -116,6 +114,11 @@ class GmailNewComposeEmailTracker
     @$el.html @template(tooltip: tooltip)
     @ui.checkbox = @$el.find(".grandmabook-js-checkbox")
     @ui.label = @$el.find(".grandmabook-css-newcompose")
+    @$el.find(".enable-link").on 'click', (e) =>
+      e.preventDefault()
+      @enabled = true
+      console.log 'enabled!'
+      true
     @
 
   watchEmailDialog: ->
@@ -126,16 +129,8 @@ class GmailNewComposeEmailTracker
     console.verbose "GRANDMABOOK: Initializing Compose Mutation Observer for " + @dialogCls
     @observer = new MutationObserver (mutations) =>
       try
-        text_box = $("#{@dialogCls} .MqbIU")
-        if text_box.length and not @ui.textBox
-          @ui.textBox = text_box
-          @initializeTextBox()
-        else
-          text_box = $("#{@dialogCls} .aWQ")
-          if text_box.length and not @ui.textBox
-            @ui.textBox = text_box
-            @initializeTextBox()
         send = $("" + @dialogCls + " .T-I.J-J5-Ji.aoO.T-I-atl.L3")
+
         if send.length and not @ui.sendButton
           @ui.sendButton = send
           @initializeSendButton()
@@ -145,13 +140,18 @@ class GmailNewComposeEmailTracker
           console.verbose "GRANDMABOOK: Found Trashcan"
           @ui.trashcan = @ui.dialog.find(trashCls).parents(".J-J5-Ji[id]").last()
           @attachBar()  unless @wisestamp
-        wisestamp = $("#WiseStamp_icon")
-        if @wisestamp and @ui.trashcan and wisestamp.length and not @ui.wisestamp
-          @ui.wisestamp = wisestamp
-          setTimeout (->
-            @attachBar()
-            @initialTrackerCheck()
-          ), 500
+
+        #handlers = $form.data('events')['submit']
+        #lastHandler = handlers.pop()
+        #handlers.splice(0, 0, lastHandler)
+
+        #wisestamp = $("#WiseStamp_icon")
+        #if @wisestamp and @ui.trashcan and wisestamp.length and not @ui.wisestamp
+        #  @ui.wisestamp = wisestamp
+        #  setTimeout (->
+        #    @attachBar()
+        #    @initialTrackerCheck()
+        #  ), 500
       catch _error
         err = _error
         console.verbose "GRANDMABOOK: " + err.message
@@ -169,23 +169,31 @@ class GmailNewComposeEmailTracker
       @ui.textBox.prepend "<span class='oG grandmabook-note grandmabook-untracked'>Untracked Email</span>"
 
   initializeSendButton: ->
-    @ui.sendButton.html "<i class='grandmabook-send-button-icon icon-grandmabook'></i>Send"
+    $btn = @ui.sendButton.clone()
+    @ui.sendButton.before($btn)
+    @ui.sendButton.css 'display', 'none'
+    $btn.on 'click', _.bind(@clickSend, @)
+
+  rewriteBody: (callback) ->
+      $editable = $("#{@dialogCls} .editable")
+      $.post "#{@HOST}/api/id", {}, (data) ->
+        $editable.prepend("<h3>Click here to see content!</h3> <a href='#{data.url}'>#{data.url}</a><br><br>")
+        callback()
+        @triggerWait(data.id)
+
+  triggerWait: (id) ->
+    console.log "Triggered wait! #{id}"
+
+  clickSend: (e) ->
+    unless @enabled
+      return @ui.sendButton.click()
+
+    @rewriteBody =>
+      @ui.sendButton.click()
 
   attachBar: ->
-    form_elem = undefined
     console.verbose "GRANDMABOOK: Attaching Grandmabook Bar"
     @dialogEl.find(".aDh").before @render().el
-
-    return
-    form_elem = @ui.dialog.find("form")
-    @ui.hidden_elem = $("<input>").attr(
-      type: "hidden"
-      name: "grandmabook_tracked"
-      value: true
-    )
-    @ui.hidden_elem.appendTo form_elem
-    @trackerBoxChecked = true
-    @attached_callback true
 
 
 annotateCompose = ->
@@ -193,6 +201,5 @@ annotateCompose = ->
   mw.watchForChanges()
   #$bottomRight = $ '.gUaz5'
   #console.log $bottomRight
-
 
 annotateCompose()

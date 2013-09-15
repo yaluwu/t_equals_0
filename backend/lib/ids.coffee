@@ -4,7 +4,7 @@ _ = require 'underscore'
 generateId = (config, req, res) ->
   crypto.randomBytes 16, (ex, buf) ->
     id = buf.toString('base64').replace(/\=+$/, '')
-    url = "#{config.HOST}#{config.ROOT}/view/#{encodeURIComponent(id)}"
+    url = "#{config.HOST}/shared/#{encodeURIComponent(id)}"
     res.send {id, url}
 
 module.exports = (config, app, io) ->

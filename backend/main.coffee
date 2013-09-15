@@ -16,7 +16,7 @@ server.listen(PORT)
 
 config =
   ROOT: process.env.URI_ROOT ? '/api'
-  HOST: process.env.HOST ? "http://localhost:#{PORT}"
+  HOST: process.env.HOST ? "http://www.familicircle.com"
 
 console.log "Listening on #{PORT} with app root #{config.ROOT}"
 
