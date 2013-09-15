@@ -34,7 +34,7 @@ module.exports = class GrandmaPageView extends View
 
     @currentFile =
       type: ''
-      length: 0
+      size: 0
       content: ''
       sender:
         name: ''
@@ -48,7 +48,7 @@ module.exports = class GrandmaPageView extends View
 
   error: ->
     console.log 'error :('
-    @socket.close()
+    @socket.disconnect()
     setTimeout _.bind(@initSocket, @), 5000
 
     # ['fileNew', 'fileChunk', 'fileClose', 'error'] (from sender)
@@ -60,7 +60,7 @@ module.exports = class GrandmaPageView extends View
   fileNew: (data) ->
     console.log "got start #{data}"
     @currentFile.type = data.type
-    @currentFile.length = data.size
+    @currentFile.size = data.size
     @currentFile.sender = data.sender
     @currentFile.content = ''
     @currentFile.bytesSoFar = 0
@@ -68,7 +68,7 @@ module.exports = class GrandmaPageView extends View
     @readyForFiles()
 
   fileChunk: ({data, size}) ->
-    console.log "got chunk #{size}"
+    console.log "got chunk (size: #{size} B)"
     @chunks.push(data)
     @currentFile.bytesSoFar += size
     @readyForFiles()
@@ -82,8 +82,7 @@ module.exports = class GrandmaPageView extends View
     @render()
 
   getType: ->
-    console.log @currentFile
-    if @currentFile.length > 0 and not @currentFile.closed
+    if @currentFile.size > 0 and not @currentFile.closed
       return 'progress'
 
     type = @currentFile.type
@@ -99,19 +98,22 @@ module.exports = class GrandmaPageView extends View
     if type?
       content = {}
       content[type] = @currentFile
-      content[type].percent = Math.floor(100 * @currentFile.bytesSoFar / @currentFile.length)
+      content[type].percent = 0
+      if @currentFile.size > 0
+        content[type].percent = Math.floor(100 * @currentFile.bytesSoFar / @currentFile.size)
 
       # Wait 4 seconds and ask for more files..
-      setTimeout (=>
-        @readyForFiles()
-      ), 4000
+      if type != 'progress'
+        setTimeout (=>
+          @readyForFiles()
+        ), 4000
     else
       content = undefined
 
     @$el.html(@template({content}))
 
   sendChunk: (chunk) ->
-    @socket.emit "fileChunk", chunk
+    @socket.emit "fileChunk", {data: chunk, size: chunk.length}
 
   sendDataz: (meta, data) ->
     console.log "beginning file transfer..."

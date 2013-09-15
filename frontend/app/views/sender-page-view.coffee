@@ -66,7 +66,7 @@ module.exports = class GrandmaPageView extends View
 
   error: ->
     console.log 'error :('
-    @socket.close()
+    @socket.disconnect()
     setTimeout _.bind(@initSocket, @), 5000
 
 
