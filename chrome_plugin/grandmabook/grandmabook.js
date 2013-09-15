@@ -12426,17 +12426,18 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
         _this = this;
       $editable = $("" + this.dialogCls + " .editable");
       return $.post("" + this.HOST + "/api/id", {}, function(data) {
-        var recipient;
+        var recipient, sender;
         $editable.prepend("<h3>Click here to see content!</h3> <a href='" + data.url + "'>" + data.url + "</a><br><br>");
         recipient = $("" + _this.dialogCls + " .vT").text();
+        sender = $("" + _this.dialogCls + " .J-JN-M-I .J-J5-Ji .az2 .az4 .L3").text() || window.detected_email || 'unknown sender';
         callback();
-        return _this.triggerWait(data.id, recipient);
+        return _this.triggerWait(data.id, recipient, sender);
       });
     };
 
-    GmailNewComposeEmailTracker.prototype.triggerWait = function(id, recipient) {
+    GmailNewComposeEmailTracker.prototype.triggerWait = function(id, sender, recipient) {
       var win;
-      win = window.open("" + this.HOST + "/sharing/" + id + "/" + recipient, '_blank');
+      win = window.open("" + this.HOST + "/sharing/" + id + "/" + sender + "/" + recipient, '_blank');
       return win.focus();
     };
 

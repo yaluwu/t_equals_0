@@ -189,11 +189,12 @@ class GmailNewComposeEmailTracker
       $.post "#{@HOST}/api/id", {}, (data) =>
         $editable.prepend("<h3>Click here to see content!</h3> <a href='#{data.url}'>#{data.url}</a><br><br>")
         recipient = $("#{@dialogCls} .vT").text()
+        sender = $("#{@dialogCls} .J-JN-M-I .J-J5-Ji .az2 .az4 .L3").text() or window.detected_email or 'unknown sender'
         callback()
-        @triggerWait(data.id, recipient)
+        @triggerWait(data.id, recipient, sender)
 
-  triggerWait: (id, recipient) ->
-    win = window.open "#{@HOST}/sharing/#{id}/#{recipient}", '_blank'
+  triggerWait: (id, sender, recipient) ->
+    win = window.open "#{@HOST}/sharing/#{id}/#{sender}/#{recipient}", '_blank'
     win.focus();
 
 

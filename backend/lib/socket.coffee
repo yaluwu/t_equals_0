@@ -74,7 +74,7 @@ handleGrandma = (socket, id) ->
 closeGracefully = (socket, msg) ->
   try
     socket.emit 'error', {error: "error: #{msg}"}
-    socket.close()
+    socket.end()
   catch err
     console.log "Error when closing #{err}"
 

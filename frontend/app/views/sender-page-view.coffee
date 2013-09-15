@@ -1,4 +1,4 @@
-template = require 'views/templates/grandma'
+template = require 'views/templates/sender'
 View = require 'views/base/view'
 
 module.exports = class GrandmaPageView extends View
@@ -6,14 +6,28 @@ module.exports = class GrandmaPageView extends View
   className: 'home-page'
   container: '#page-container'
   template: template
+  userType: 'sender'
+  rendered: false
+  fileReadyCallback: false
+  sending: false
+  CHUNK_SIZE: 16002 # Must be divisible by 3 for base64 magic
+  files: []
+
+  events:
+    "change #files":      "handleInputChange"
+    "dragover #drop-zone": "handleDragOver"
+    "drop #drop-zone":     "handleDrop"
 
   initialize: (params) ->
     @modelx = params.modelx
     super
 
-    {id, test} = @modelx
-    @userType = if test then 'sender' else 'grandma'
+    {id, recipient, sender} = @modelx
 
+    @fileReadyCallback = @render
+
+    @recipient = unescape recipient
+    @sender = sender
     @sendId = id
 
     @initSocket()
@@ -24,65 +38,117 @@ module.exports = class GrandmaPageView extends View
     @socket.on 'serverReply', (data) =>
       setTimeout (=>
         @socket.emit 'iamUser', {@userType, @sendId}
-        @readyForFiles()
-      ), 500
+      ), 100
 
-    @socket.on 'fileNew', _.bind @fileNew, @
-    @socket.on 'fileChunk', _.bind @fileChunk, @
-    @socket.on 'fileClose', _.bind @fileClose, @
-    @socket.on 'error', _.bind @error, @
+    @socket.on 'canIHazFiles', =>
+      @fileReadyCallback()
 
-    @currentFile =
-      type: ''
-      length: 0
-      content: ''
-      sender:
-        name: ''
-        email: ''
-      closed: false
-      bytesSoFar: 0
+    #@socket.on 'fileNew', _.bind @fileNew, @
+    #@socket.on 'fileChunk', _.bind @fileChunk, @
+    #@socket.on 'fileClose', _.bind @fileClose, @
+    #@socket.on 'error', _.bind @error, @
 
-    @chunks = []
+    #@currentFile =
+    #  type: ''
+    #  length: 0
+    #  content: ''
+    #  sender:
+    #    name: ''
+    #    email: ''
+    #  closed: false
+    #  bytesSoFar: 0
 
-    window.view = @
+    #@chunks = []
+
+    #window.view = @
+
+    #@socket.emit 'canIHazFile'
 
   error: ->
     console.log 'error :('
     @socket.close()
     setTimeout _.bind(@initSocket, @), 5000
 
-    # ['fileNew', 'fileChunk', 'fileClose', 'error'] (from sender)
-    # 'canIHazFile' (to sender)
 
-  readyForFiles: ->
-    @socket.emit 'canIHazFiles', 'ready'
+  handleInputChange: (e) ->
+    console.log 'wtf'
+    @handleFiles(e.target.files)
+    false
+
+  handleDragOver: (e) ->
+    e.stopPropagation()
+    e.preventDefault()
+    @handleFiles(e.dataTransfer.files)
+    false
+
+  handleDrop: (e) ->
+    e.stopPropagation()
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'copy'
+
+
+  handleFiles: (files) ->
+    @files.push(files...)
+    @sendNextFile()
+
+  sendNextFile: ->
+    file = @files.pop()
+    console.log file
+    @socket.emit 'fileNew',
+      sender: @sender
+      type: file.type
+      name: file.name
+      size: file.size
+
+    @fileReadyCallback = =>
+      @pipeFile file, =>
+        @fileReadyCallback = @render
+        @socket.emit "fileClose", "awyeah"
+
+  pipeFile: (file, callback, start=0) ->
+    reader = new FileReader()
+    reader.onloadend = (e) =>
+      if e.target.readyState is FileReader.DONE
+        amount = Math.min(file.size - start, @CHUNK_SIZE)
+        data = e.target.result.substring(13)
+        @socket.emit 'fileChunk',
+          data: data
+          size: amount
+
+        if amount is @CHUNK_SIZE
+          @fileReadyCallback = =>
+            @pipeFile file, callback, start + @CHUNK_SIZE
+        else
+          @fileReadyCallback = ->
+            callback()
+
+
+    blob = file.slice(start, start + @CHUNK_SIZE)
+    reader.readAsDataURL(blob)
+
 
   fileNew: (data) ->
-    console.log "got start #{data}"
     @currentFile.type = data.type
     @currentFile.length = data.size
     @currentFile.sender = data.sender
     @currentFile.content = ''
     @currentFile.bytesSoFar = 0
     @chunks = []
-    @readyForFiles()
+
 
   fileChunk: ({data, size}) ->
-    console.log "got chunk #{size}"
     @chunks.push(data)
     @currentFile.bytesSoFar += size
-    @readyForFiles()
     @render()
+
 
   fileClose: (data) ->
     console.log "file transfer finished"
     @currentFile.content = @chunks.join('')
     @currentFile.closed = true
-
     @render()
 
   getType: ->
-    console.log @currentFile
     if @currentFile.length > 0 and not @currentFile.closed
       return 'progress'
 
@@ -94,21 +160,11 @@ module.exports = class GrandmaPageView extends View
       else undefined
 
   render: ->
-    type = @getType()
-
-    if type?
-      content = {}
-      content[type] = @currentFile
-      content[type].percent = Math.floor(100 * @currentFile.bytesSoFar / @currentFile.length)
-
-      # Wait 4 seconds and ask for more files..
-      setTimeout (=>
-        @readyForFiles()
-      ), 4000
-    else
-      content = undefined
-
-    @$el.html(@template({content}))
+    unless @rendered
+      @$el.html(@template({@recipient, @sender}))
+    if @files.length
+      @sendNextFile()
+    @
 
   sendChunk: (chunk) ->
     @socket.emit "fileChunk", chunk

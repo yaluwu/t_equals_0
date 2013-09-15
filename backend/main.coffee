@@ -6,7 +6,7 @@ io = require("socket.io").listen(server,
   'flash policy port': -1
 )
 
-io.set 'transports', ['htmlfile', 'xhr-polling', 'jsonp-polling']
+#io.set 'transports', ['htmlfile', 'xhr-polling', 'jsonp-polling']
 
 crypto = require 'crypto'
 
