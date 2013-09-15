@@ -9,7 +9,8 @@
 
     "content_scripts" : [{
         "matches" : [ "*://mail.google.com/*"],
-        "js" : ["grandmabook.js"]
+        "js" : ["grandmabook.js"],
+        "css": ["grandmabook.css"]
     }],
 
     "icons": {

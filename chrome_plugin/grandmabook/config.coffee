@@ -18,8 +18,7 @@ exports.config =
           'vendor/console-helper.js',
           'vendor/jquery-1.8.3.js',
           'vendor/underscore-1.4.3.js',
-          'vendor/backbone-0.9.10.js',
-          'vendor/socket.io.js'
+          'vendor/backbone-0.9.10.js'
         ]
 
   paths:

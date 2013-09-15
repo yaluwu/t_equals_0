@@ -4,29 +4,34 @@ $ = jQuery
 
 unless window.io
   script = document.createElement 'script'
-  script.setAttribute 'src', "http://ws.familicircle.net/socket.io/socket.io.js"
+  script.setAttribute 'src', "//ws.familicircle.com/socket.io/socket.io.js"
   document.head.appendChild script
+
 
 class MainWatcher
   constructor: (@emailId) ->
+    @emailId = 0
     @views = []
 
   attachGrandmabook: (el, text) ->
     $el = $(el)
     unless $el.hasClass("grandmabook-nc-email")
-      $el.addClass "grandmabook grandmabook-nc-email grandmabook-nc-email-" + @emailId
+      emailId = @emailId
+      @emailId += 1
+
+      $el.addClass "grandmabook grandmabook-nc-email grandmabook-nc-email-" + emailId
       _enabled = true
       _enabled_url = ""
       _tooltip = "Track Email with Grandmabook"
 
       callback = (success) =>
-        @emailId += 1
         @views.push view
         console.log "GRANDMABOOK: Created View"
 
-      binded_callback = _.bind(callback, this)
+      binded_callback = _.bind callback, @
+
       view = new GmailNewComposeEmailTracker(
-        emailId: @emailId
+        emailId: emailId
         dialogEl: $el
         enabled: _enabled
         enabled_url: _enabled_url
@@ -76,8 +81,24 @@ class MainWatcher
 
 
 class GmailNewComposeEmailTracker
-  constructor: (@emailId, @dialogEl, @enabled, @enabled_url, @tooltip, @callback) ->
+  LOGO: 'http://www.familicircle.com/images/logo_40_trans.png'
+
+  constructor: (params) ->
+    {@emailId, @dialogEl, @enabled, @enabled_url, @tooltip, @callback} = params
+    @dialogCls = ".grandmabook-nc-email-#{@emailId}"
+    @ui =
+      dialog: @dialogEl
+    @$el = $("<p class='grandmabook-container'/>")
+    @el = @$el[0]
+
     @watchEmailDialog()
+
+  template: (params) ->
+    """<div class='#{params.dialogCls}'>
+    <img src='#{@LOGO}' alt='FamiliCircle'>
+    Yo, what up
+    </div>
+    """
 
   clickedDisable: ->
     url = undefined
@@ -95,10 +116,9 @@ class GmailNewComposeEmailTracker
     @$el.html @template(tooltip: tooltip)
     @ui.checkbox = @$el.find(".grandmabook-js-checkbox")
     @ui.label = @$el.find(".grandmabook-css-newcompose")
-    this
+    @
 
   watchEmailDialog: ->
-    _this = this
     config =
       childList: true
       subtree: true
@@ -106,12 +126,12 @@ class GmailNewComposeEmailTracker
     console.verbose "GRANDMABOOK: Initializing Compose Mutation Observer for " + @dialogCls
     @observer = new MutationObserver (mutations) =>
       try
-        text_box = $("" + @dialogCls + " .MqbIU")
+        text_box = $("#{@dialogCls} .MqbIU")
         if text_box.length and not @ui.textBox
           @ui.textBox = text_box
           @initializeTextBox()
         else
-          text_box = $("" + @dialogCls + " .aWQ")
+          text_box = $("#{@dialogCls} .aWQ")
           if text_box.length and not @ui.textBox
             @ui.textBox = text_box
             @initializeTextBox()
@@ -134,7 +154,7 @@ class GmailNewComposeEmailTracker
           ), 500
       catch _error
         err = _error
-        console.verbose "GRANDMABOOK: " + err.messgae
+        console.verbose "GRANDMABOOK: " + err.message
 
     try
       target = $("" + @dialogCls).get(0)
@@ -153,9 +173,10 @@ class GmailNewComposeEmailTracker
 
   attachBar: ->
     form_elem = undefined
-    _this = this
     console.verbose "GRANDMABOOK: Attaching Grandmabook Bar"
-    @ui.trashcan.before @render().el
+    @dialogEl.find(".aDh").before @render().el
+
+    return
     form_elem = @ui.dialog.find("form")
     @ui.hidden_elem = $("<input>").attr(
       type: "hidden"
@@ -163,20 +184,7 @@ class GmailNewComposeEmailTracker
       value: true
     )
     @ui.hidden_elem.appendTo form_elem
-    @trackerBoxChecked = @getCreateByDefault()
-    unless @enabled
-      @ui.label.addClass "grandmabook-disabled"
-    else
-      chrome.storage.sync.get "grandmabook-tip-accepted", (result) ->
-        checkmark = undefined
-        tip = undefined
-        unless result["grandmabook-tip-accepted"]
-          console.verbose "GRANDMABOOK: Attaching Tip"
-          #tip = new SIG.Views.GmailEmailTrackerTip(mode: "new")
-          #checkmark = $(".grandmabook-js-checkbox .faux-checkmark")
-          #checkmark.addClass "grandmabook-disabled"
-          @ui.checkbox.append $("<div>mike test</div>")
-
+    @trackerBoxChecked = true
     @attached_callback true
 
 
