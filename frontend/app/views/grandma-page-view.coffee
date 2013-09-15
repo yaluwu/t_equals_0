@@ -36,9 +36,7 @@ module.exports = class GrandmaPageView extends View
       type: ''
       size: 0
       content: ''
-      sender:
-        name: ''
-        email: ''
+      sender: ''
       closed: false
       bytesSoFar: 0
 
@@ -62,6 +60,7 @@ module.exports = class GrandmaPageView extends View
     @currentFile.type = data.type
     @currentFile.size = data.size
     @currentFile.sender = data.sender
+    @currentFile.closed = false
     @currentFile.content = ''
     @currentFile.bytesSoFar = 0
     @chunks = []
@@ -110,6 +109,8 @@ module.exports = class GrandmaPageView extends View
     else
       content = undefined
 
+    console.log content
+
     @$el.html(@template({content}))
 
   sendChunk: (chunk) ->
@@ -132,9 +133,7 @@ module.exports = class GrandmaPageView extends View
     meta =
       type: "video/youtube"
       size: url.length
-      sender:
-        name: "Yalu Wu"
-        email: "yaluwu@gmail.com"
+      sender: 'Yalu Wu'
 
     @sendDataz meta, data
 
